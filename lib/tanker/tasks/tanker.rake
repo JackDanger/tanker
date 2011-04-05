@@ -1,7 +1,10 @@
 namespace :tanker do
+
+  desc "Reindex all your IndexTank data and functions"
+  task :reindex => [:reindex_models, :functions]
  
   desc "Reindex all models"
-  task :reindex => :environment do
+  task :reindex_models => :environment do
     puts "reindexing all models"
     load_models
     Tanker::Utilities.reindex_all_models
