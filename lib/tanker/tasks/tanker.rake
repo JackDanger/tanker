@@ -34,6 +34,7 @@ HELP
     else
       indexes.each do |index_name, functions|
         index = Tanker.api.get_index(index_name)
+        Tanker::Utilities.build_index(index_name) unless index.exists?
         functions.each do |idx, definition|
           index.add_function(idx, definition)
           puts "Index #{index_name.inspect} function: #{idx} => #{definition.inspect}"

@@ -173,6 +173,11 @@ module Tanker
     def tanker_reindex(options = {})
       puts "Indexing #{self} model"
 
+      unless tanker_config.index.exists?
+        Tanker::Utilities.build_index(tanker_config.index_name)
+      end
+
+
       batches = []
       options[:batch_size] ||= 200
       records = options[:scope] ? send(options[:scope]).all : all
