@@ -1,13 +1,13 @@
 = Tanker - IndexTank integration to your favorite orm
 
-IndexTank is a great search indexing service, this gem tries to make
-that any orm stays in sync with IndexTank easily. It has a simple
-yet powerful approach to integrate IndexTank with any orm and
-also supports pagination using +will_paginate/collection+.
+IndexTank is a great search indexing service and this gem lets any Ruby
+ORM stay in sync with IndexTank easily. Tanker provides a clean API for
+defining what data you want indexed and for querying that data. Query
+results natively support pagination via +will_paginate/collection+.
 
-Very little is needed to make it work,
-basically, all you need is that the orm instance respond to +id+ and any attributes
-you wish to index.
+== Requirements
+
+As long as your Ruby objects have an 'id' method Tanker will index them.
 
 == Installation
     gem install tanker
