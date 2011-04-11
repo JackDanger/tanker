@@ -17,7 +17,7 @@ describe Tanker do
     }.should raise_error(Tanker::NotConfigured)
   end
 
-  it 'should requiquire a block when seting up tanker model' do
+  it 'should require a block when seting up tanker model' do
     Tanker.configuration = {:url => 'http://api.indextank.com'}
     Dummy.send(:include, Tanker)
     lambda {
