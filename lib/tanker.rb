@@ -24,6 +24,7 @@ module Tanker
 
   class NotConfigured < StandardError; end
   class NoBlockGiven < StandardError; end
+  class NoIndexName < StandardError; end
 
   autoload :Configuration, 'tanker/configuration'
   extend Configuration
@@ -46,6 +47,16 @@ module Tanker
 
       class << klass
         define_method(:per_page) { 10 } unless respond_to?(:per_page)
+      end
+    end
+
+    def guess_index_name
+      if defined?(Rails)
+        if Rails.respond_to?(:application)
+          "#{Rails.application.class.name.split('::').first.downcase}_#{Rails.env}"
+        else
+          "#{File.dirname(Rails.root)}_#{Rails.env}"
+        end
       end
     end
 
@@ -154,11 +165,15 @@ module Tanker
 
     attr_accessor :tanker_config
 
-    def tankit(name, &block)
+    def tankit(name = nil, &block)
+      name ||= Tanker.guess_index_name
+
+      raise NoIndexName, "Please provide a name for this index" unless name
+      
       if block_given?
-        self.tanker_config = ModelConfig.new(name, block)
+        self.tanker_config = ModelConfig.new(name.to_s, block)
       else
-        raise(NoBlockGiven, 'Please provide a block')
+        raise NoBlockGiven, 'Please provide a block'
       end
     end
 

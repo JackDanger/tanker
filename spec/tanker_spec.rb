@@ -25,6 +25,37 @@ describe Tanker do
     }.should raise_error(Tanker::NoBlockGiven)
   end
 
+  it 'should require an index name when seting up tanker model' do
+    Tanker.configuration = {:url => 'http://api.indextank.com'}
+    Dummy.send(:include, Tanker)
+    lambda {
+      Dummy.send(:tankit) {}
+    }.should raise_error(Tanker::NoIndexName)
+  end
+
+  it 'should smartly guess an index name when seting up tanker model' do
+    Tanker.configuration = {:url => 'http://api.indextank.com'}
+    Dummy.send(:include, Tanker)
+    unless defined?(Rails)
+      make_rails = true
+      Rails = Object.new 
+      MyApp = Class.new unless defined?(MyApp)
+      unless Rails.respond_to?(:application)
+        def Rails.application
+          MyApp.new
+        end
+        def Rails.env
+          'my_env'
+        end
+      end
+    end
+    lambda {
+      Dummy.send(:tankit) {}
+    }.should_not raise_error
+    Dummy.tanker_config.index_name.should == 'myapp_my_env'
+    Object.send :remove_const, :Rails if make_rails
+  end
+
   it 'should set indexable fields' do
     Tanker.configuration = {:url => 'http://api.indextank.com'}
     Dummy.send(:include, Tanker)
