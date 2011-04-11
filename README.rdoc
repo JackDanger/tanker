@@ -223,8 +223,8 @@ Or you can restrict indexing to a subset of records. This is particularly helpfu
 
 
 == TODO
-* Documentation
-* More fancy stuff (Suggestions?)
+* Non-rails integration (like implicit index naming)
+* allowing functions to be named by strings in the app, only converted to integers when talking to IndexTank
 
 == Note on Patches/Pull Requests
  
