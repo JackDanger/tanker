@@ -1,4 +1,4 @@
-= Tanker - IndexTank integration to your favorite orm
+= Tanker - IndexTank integration to your favorite ORM
 
 IndexTank is a great search indexing service and this gem lets any Ruby
 ORM stay in sync with IndexTank easily. Tanker provides a clean API for
