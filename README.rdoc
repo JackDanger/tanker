@@ -179,9 +179,19 @@ IndexTank and the Tanker gem support native geographic calculations. All you nee
 
 
 
-== Reindex your data
+== An index for each environment
 
-If you are using rails 3 there are of couple of rake tasks included in your project
+If you want to use different indexes for development and production you can either specify the index name explicitly:
+
+    tankit "myapp_#{ENV['RACK_ENV']}" do...
+
+Or you can let Tanker guess the name of the index for you:
+
+    tankit do ...
+
+If you're on Rails Tanker will assume the index should be named "app_name_development" or "app_name_production"
+
+== Reindex your data
 
     rake tanker:clear_indexes
 
