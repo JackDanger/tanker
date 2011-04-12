@@ -167,6 +167,20 @@ describe Tanker do
     end
   end
 
+  it 'should set categories' do
+    Tanker.configuration = {:url => 'http://api.indextank.com'}
+    Dummy.send(:include, Tanker)
+    Dummy.send(:tankit, 'dummy index') do
+      categories do
+        { 'foo' => foo }
+      end
+    end
+
+    dummy_instance = Dummy.new
+    dummy_instance.should_receive(:foo).and_return('bar')
+    dummy_instance.instance_exec(&dummy_instance.tanker_config.categories).should == { 'foo' => 'bar' }
+  end
+
   describe 'tanker instance' do
     it 'should create an api instance' do
       Tanker.api.class.should == IndexTank::ApiClient

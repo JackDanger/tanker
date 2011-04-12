@@ -236,6 +236,11 @@ module Tanker
       @functions
     end
 
+    def categories(&block)
+      @categories = block if block
+      @categories
+    end
+
     def index
       @index ||= Tanker.api.get_index(index_name)
     end
@@ -255,6 +260,10 @@ module Tanker
 
     def tanker_variables
       tanker_config.variables
+    end
+
+    def tanker_categories
+      tanker_config.categories
     end
 
     # update a create instance from index tank
@@ -297,6 +306,10 @@ module Tanker
         options[:variables] = tanker_variables.inject({}) do |hash, variables|
           hash.merge(instance_exec(&variables))
         end
+      end
+
+      if tanker_categories
+        options[:categories] = instance_exec(&tanker_categories)
       end
 
       options
