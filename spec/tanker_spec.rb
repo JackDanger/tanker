@@ -351,5 +351,58 @@ describe Tanker do
       person.delete_tank_indexes
     end
 
+    describe 'facets' do
+      it 'search should return a two-element array when ":facets => true" option is set' do
+        Person.tanker_index.should_receive(:search).and_return({
+          "matches" => 1,
+          "results" => [
+            {"docid" => "Person 1", "__type" => "Person", "__id" => "1"}
+          ],
+          "facets" => {
+            "job" => {
+              "tiny dancer" => 1
+            }
+          }
+        })
+        Person.should_receive(:find).and_return([Person.new])
+
+        Person.search_tank('hey!', :facets => true).size.should == 2
+      end
+
+      it '":facets => true" search results first element are the instantiated models' do
+        Person.tanker_index.should_receive(:search).and_return({
+          "matches" => 1,
+          "results" => [
+            {"docid" => "Person 1", "__type" => "Person", "__id" => "1"}
+          ],
+          "facets" => {
+            "job" => {
+              "tiny dancer" => 1
+            }
+          }
+        })
+        Person.should_receive(:find).and_return([Person.new])
+
+        Person.search_tank('hey!', :facets => true).first.should be_an_instance_of(WillPaginate::Collection)
+      end
+
+      it '":facets => true" search results second element is a hash of the facets' do
+        Person.tanker_index.should_receive(:search).and_return({
+          "matches" => 1,
+          "results" => [
+            {"docid" => "Person 1", "__type" => "Person", "__id" => "1"}
+          ],
+          "facets" => {
+            "job" => {
+              "tiny dancer" => 1
+            }
+          }
+        })
+        Person.should_receive(:find).and_return([Person.new])
+
+        Person.search_tank('hey!', :facets => true).last.should == { "job" => { "tiny dancer" => 1 } }
+      end
+    end
+
   end
 end

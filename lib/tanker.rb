@@ -69,6 +69,8 @@ module Tanker
       index    = models.first.tanker_index
       query    = query.join(' ') if Array === query
 
+      return_facets = options.delete(:facets)
+
       if (index_names = models.map(&:tanker_config).map(&:index_name).uniq).size > 1
         raise "You can't search across multiple indexes in one call (#{index_names.inspect})"
       end
@@ -112,6 +114,8 @@ module Tanker
           pager.total_entries = results["matches"]
         end
       end
+
+      return_facets ? [@entries, (results['facets'] || {})] : @entries
     end
 
     protected
