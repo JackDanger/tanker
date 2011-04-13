@@ -70,6 +70,18 @@ describe Tanker do
       dummy_instance.tanker_config.indexes.any? {|field, block| field == :class_name }.should == true
     end
 
+    it 'should set categories' do
+      @dummy_class.send(:tankit, 'dummy index') do
+        categories do
+          { 'foo' => foo }
+        end
+      end
+
+      dummy_instance = @dummy_class.new
+      dummy_instance.should_receive(:foo).and_return('bar')
+      dummy_instance.instance_exec(&dummy_instance.tanker_config.categories).should == { 'foo' => 'bar' }
+    end
+
     it 'should overwrite the previous index name if provided' do
       @dummy_class.send(:tankit, 'first index') do
       end
@@ -165,20 +177,6 @@ describe Tanker do
 
       Tanker.instance_variable_set(:@included_in, Tanker.included_in - [dummy_class])
     end
-  end
-
-  it 'should set categories' do
-    Tanker.configuration = {:url => 'http://api.indextank.com'}
-    Dummy.send(:include, Tanker)
-    Dummy.send(:tankit, 'dummy index') do
-      categories do
-        { 'foo' => foo }
-      end
-    end
-
-    dummy_instance = Dummy.new
-    dummy_instance.should_receive(:foo).and_return('bar')
-    dummy_instance.instance_exec(&dummy_instance.tanker_config.categories).should == { 'foo' => 'bar' }
   end
 
   describe 'tanker instance' do
