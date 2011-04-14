@@ -170,9 +170,11 @@ module Tanker
           self.tanker_config.indexes << [key, value]
         end
 
-        unless config.variables.empty?
-          self.tanker_config.variables do
-            instance_exec &config.variables.first
+        %w[variables categories].each do |method|
+          unless config.send(method).empty?
+            self.tanker_config.send(method) do
+              instance_exec &config.send(method).first
+            end
           end
         end
       else
@@ -222,6 +224,7 @@ module Tanker
       @indexes    = []
       @variables  = []
       @functions  = {}
+      @categories = []
       instance_exec &block
     end
 
@@ -241,7 +244,7 @@ module Tanker
     end
 
     def categories(&block)
-      @categories = block if block
+      @categories << block if block
       @categories
     end
 
@@ -312,8 +315,10 @@ module Tanker
         end
       end
 
-      if tanker_categories
-        options[:categories] = instance_exec(&tanker_categories)
+      unless tanker_categories.empty?
+        options[:categories] = tanker_categories.inject({}) do |hash, categories|
+          hash.merge(instance_exec(&categories))
+        end
       end
 
       options

@@ -78,8 +78,8 @@ describe Tanker do
       end
 
       dummy_instance = @dummy_class.new
-      dummy_instance.should_receive(:foo).and_return('bar')
-      dummy_instance.instance_exec(&dummy_instance.tanker_config.categories).should == { 'foo' => 'bar' }
+      dummy_instance.stub!(:foo => "bar")
+      dummy_instance.tanker_index_options[:categories] == { 'foo' => 'bar' }
     end
 
     it 'should overwrite the previous index name if provided' do
@@ -150,6 +150,28 @@ describe Tanker do
 
       dummy_instance = @dummy_class.new
       dummy_instance.tanker_index_options[:variables].should == { 0 => 1.618034, 1 => 2.7182818 }
+    end
+
+    it 'should merge with previously defined categories' do
+      @dummy_class.send(:tankit, 'dummy index') do
+        categories do
+          {
+            "undies" => "boxers",
+            "cheese" => "cheddar"
+          }
+        end
+      end
+      @dummy_class.send(:tankit, 'dummy index') do
+        categories do
+          {
+            "undies" => "briefs",
+            "drives" => "prius"
+          }
+        end
+      end
+
+      dummy_instance = @dummy_class.new
+      dummy_instance.tanker_index_options[:categories].should == { "undies" => "briefs", "cheese" => "cheddar", "drives" => "prius" }
     end
 
     it "can be initially defined in one module and extended in the including class" do
