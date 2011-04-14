@@ -422,6 +422,15 @@ describe Tanker do
 
         Person.search_tank('hey!', :facets => true).last.should == { "job" => { "tiny dancer" => 1 } }
       end
+
+      it ':category_filters option gets passed to client as JSON' do
+        Person.tanker_index.should_receive(:search)
+          .with(anything, hash_including(:category_filters => '{"type":"Person"}'))
+          .and_return(nil)
+        Tanker.stub!(:instantiate_results => [Person.new])
+
+        Person.search_tank('hey!', :category_filters => { 'type' => Person.name })
+      end
     end
 
   end

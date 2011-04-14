@@ -99,6 +99,9 @@ module Tanker
         end
       end
 
+      # IndexTank expects a JSON_formatted map in the GET query variable
+      options[:category_filters] = options[:category_filters].to_json if options[:category_filters]
+
       options[:fetch] = "__type,__id"
 
       query = "__any:(#{query.to_s}) __type:(#{models.map(&:name).join(' OR ')})"

@@ -191,7 +191,7 @@ If your IndexTank indexes have faceting enabled, you can do this:
         # return a hash of category/value pairs
         categories do
           {
-            'price_range' => (price > 5) ? 'expensive' : 'cheap'
+            'price_range' => (price > 5 ? 'expensive' : 'cheap')
           }
         end
       end
@@ -203,6 +203,21 @@ To retrieve facets in a search:
 
     # @facets =
     #   { 'price_range' => { 'expensive' => 93, 'cheap' => 47 } }
+
+At some point you will probably also want to filter what categories to search.
+That's faceted searching, after all!
+
+    # search only cheap parts:
+    @parts = Part.search_tank('widget', :category_filters => { 'price_range' => 'cheap' })
+
+    # highly contrived, but to show how you could filter multiple values for a
+    # given category:
+    @parts = Part.search_tank('widget', :category_filters => { 'price_range' => ['cheap', 'expensive'] })
+
+    # or multiple categories:
+    @parts = Part.search_tank('widget', :category_filters => { 'price_range' => ['cheap', 'expensive'],
+                                                               'type' => 'Part' })
+
 
 == Extend your index definitions
 
