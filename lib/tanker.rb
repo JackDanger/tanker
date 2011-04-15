@@ -26,8 +26,7 @@ module Tanker
   class NoBlockGiven < StandardError; end
   class NoIndexName < StandardError; end
 
-  autoload :Configuration, 'tanker/configuration'
-  extend Configuration
+  extend Tanker::Configuration
 
   class << self
     attr_reader :included_in
@@ -113,7 +112,7 @@ module Tanker
 
       @entries = WillPaginate::Collection.create(page, per_page) do |pager|
         # inject the result array into the paginated collection:
-        pager.replace instantiate_results(results)
+        pager.replace Utilities.instantiate_results(results)
 
         unless pager.total_entries
           # the pager didn't manage to guess the total count, do it manually
@@ -121,42 +120,6 @@ module Tanker
         end
       end
     end
-
-    protected
-
-      def instantiate_results(index_result)
-        results = index_result['results']
-        return [] if results.empty?
-
-        id_map = results.inject({}) do |acc, result|
-          model, id = result["docid"].split(" ", 2)
-          acc[model] ||= []
-          acc[model] << id.to_i
-          acc
-        end
-
-        if 1 == id_map.size # check for simple case, just one model involved
-          klass = constantize(id_map.keys.first)
-          # eager-load and return just this model's records
-          klass.find(id_map.values.flatten)
-        else # complex case, multiple models involved
-          id_map.each do |klass, ids|
-            # replace the id list with an eager-loaded list of records for this model
-            id_map[klass] = constantize(klass).find(ids)
-          end
-          # return them in order
-          results.map do |result|
-            model, id = result["docid"].split(" ", 2)
-            id_map[model].detect {|record| id.to_i == record.id }
-          end
-        end
-      end
-
-      def constantize(klass_name)
-        Object.const_defined?(klass_name) ?
-                  Object.const_get(klass_name) :
-                  Object.const_missing(klass_name)
-      end
   end
 
   # these are the class methods added when Tanker is included

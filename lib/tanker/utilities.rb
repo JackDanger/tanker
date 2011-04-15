@@ -48,6 +48,49 @@ module Tanker
       rescue => error
         puts error.to_s
       end
+
+      def instantiate_results(index_result)
+        results = index_result['results']
+        return [] if results.empty?
+
+        id_map = results.inject({}) do |acc, result|
+          model, id = result["docid"].split(" ", 2)
+          acc[model] ||= []
+          acc[model] << id.to_i
+          acc
+        end
+
+        if 1 == id_map.size # check for simple case, just one model involved
+          klass = constantize(id_map.keys.first)
+          # eager-load and return just this model's records
+          ensure_order klass.find(id_map.values.first), id_map.values.first
+        else # complex case, multiple models involved
+          id_map.each do |klass, ids|
+            # replace the id list with an eager-loaded list of records for this model
+            id_map[klass] = ensure_order constantize(klass).find(ids), ids
+          end
+          results.map do |result|
+            model, id = result["docid"].split(" ", 2)
+            id_map[model].detect {|record| id.to_i == record.id }
+          end
+        end
+      end
+
+      def constantize(klass_name)
+        Object.const_defined?(klass_name) ?
+                  Object.const_get(klass_name) :
+                  Object.const_missing(klass_name)
+      end
+
+      protected
+
+        def ensure_order(records, ids)
+          ordered_records = []
+          ids.each do |id|
+            ordered_records << records.detect {|r| r.id == id }
+          end
+          ordered_records
+        end
     end
   end
 end
