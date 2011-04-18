@@ -69,8 +69,6 @@ module Tanker
       index    = models.first.tanker_index
       query    = query.join(' ') if Array === query
 
-      return_facets = options.delete(:facets)
-
       if (index_names = models.map(&:tanker_config).map(&:index_name).uniq).size > 1
         raise "You can't search across multiple indexes in one call (#{index_names.inspect})"
       end
@@ -118,7 +116,9 @@ module Tanker
         end
       end
 
-      return_facets ? [@entries, (results['facets'] || {})] : @entries
+      @entries.extend ResultsMethods
+      @entries.results = results
+      @entries
     end
 
     protected
@@ -330,6 +330,14 @@ module Tanker
     # create a unique index based on the model name and unique id
     def it_doc_id
       self.class.name + ' ' + self.id.to_s
+    end
+  end
+
+  module ResultsMethods
+    attr_accessor :results
+
+    def facets
+      @results['facets']
     end
   end
 end
