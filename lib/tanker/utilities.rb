@@ -54,7 +54,7 @@ module Tanker
         return [] if results.empty?
 
         id_map = results.inject({}) do |acc, result|
-          model = result["__type"]
+          model = detect_model(result)
           id = constantize(model).tanker_parse_doc_id(result)
           acc[model] ||= []
           acc[model] << id.to_i
@@ -67,7 +67,8 @@ module Tanker
         end
         # return them in order
         results.map do |result|
-          model, id = result["__type"], result["__id"]
+          model = detect_model(result)
+          id = constantize(model).tanker_parse_doc_id(result)
           id_map[model].detect {|record| id.to_i == record.id }
         end
       end
@@ -76,6 +77,10 @@ module Tanker
         Object.const_defined?(klass_name) ?
                   Object.const_get(klass_name) :
                   Object.const_missing(klass_name)
+      end
+
+      def detect_model(result)
+        result["__type"] || result['docid'].split(' ').first
       end
 
       protected
