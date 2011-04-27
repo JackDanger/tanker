@@ -225,7 +225,7 @@ describe Tanker do
 
       dummy_instance = dummy_class.new
       dummy_instance.tanker_config.index_name.should == 'another index'
-      Hash[*dummy_instance.tanker_config.indexes.flatten].keys.should == [:name, :email]
+      Set.new(Hash[*dummy_instance.tanker_config.indexes.flatten].keys).should == Set.new([:name, :email])
 
       Tanker.instance_variable_set(:@included_in, Tanker.included_in - [dummy_class])
     end
@@ -442,7 +442,7 @@ describe Tanker do
         Person.tanker_index.should_receive(:search).
           with(anything, hash_including(:category_filters => '{"type":"Person"}')).
           and_return(nil)
-        Tanker.stub!(:instantiate_results => [Person.new])
+        Tanker::Utilities.stub!(:instantiate_results => [Person.new])
 
         Person.search_tank('hey!', :category_filters => { 'type' => Person.name })
       end
