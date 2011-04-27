@@ -140,29 +140,26 @@ module Tanker
     def tankit(name = nil, &block)
       name ||= Tanker.guess_index_name
 
+      raise NoBlockGiven, 'Please provide a block' unless block_given?
       raise NoIndexName, "Please provide a name for this index" unless name || tanker_config
-      
-      if block_given?
-        self.tanker_config = ModelConfig.new(name.to_s, block)
 
-        name ||= self.tanker_config.index_name
+      self.tanker_config = ModelConfig.new(name.to_s, block)
 
-        self.tanker_config.index_name = name
+      name ||= self.tanker_config.index_name
 
-        config = ModelConfig.new(name, block)
-        config.indexes.each do |key, value|
-          self.tanker_config.indexes << [key, value]
-        end
+      self.tanker_config.index_name = name
 
-        %w[variables categories].each do |method|
-          unless config.send(method).empty?
-            self.tanker_config.send(method) do
-              instance_exec &config.send(method).first
-            end
+      config = ModelConfig.new(name, block)
+      config.indexes.each do |key, value|
+        self.tanker_config.indexes << [key, value]
+      end
+
+      %w[variables categories].each do |method|
+        unless config.send(method).empty?
+          self.tanker_config.send(method) do
+            instance_exec &config.send(method).first
           end
         end
-      else
-        raise NoBlockGiven, 'Please provide a block'
       end
     end
 
