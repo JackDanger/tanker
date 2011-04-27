@@ -440,8 +440,8 @@ describe Tanker do
 
       it ':category_filters option gets passed to client as JSON' do
         Person.tanker_index.should_receive(:search).
-          .with(anything, hash_including(:category_filters => '{"type":"Person"}'))
-          .and_return(nil)
+          with(anything, hash_including(:category_filters => '{"type":"Person"}')).
+          and_return(nil)
         Tanker.stub!(:instantiate_results => [Person.new])
 
         Person.search_tank('hey!', :category_filters => { 'type' => Person.name })
