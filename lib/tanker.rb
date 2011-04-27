@@ -36,11 +36,12 @@ module Tanker
     end
 
     def included(klass)
+      configuration # raises error if not defined
+
       @included_in ||= []
       @included_in << klass
       @included_in.uniq!
 
-      configuration # raises error if not defined
       klass.send :include, InstanceMethods
       klass.extend ClassMethods
 
@@ -81,7 +82,6 @@ module Tanker
         raise "You can't search across multiple indexes in one call (#{index_names.inspect})"
       end
 
-
       # move conditions into the query body
       if conditions = options.delete(:conditions)
         conditions.each do |field, value|
@@ -106,6 +106,11 @@ module Tanker
         end
       end
 
+      # IndexTank expects a JSON_formatted map in the GET query variable
+      options[:category_filters] = options[:category_filters].to_json if options[:category_filters]
+
+      options[:fetch] = "__type,__id"
+
       query = "__any:(#{query.to_s}) __type:(#{models.map(&:name).join(' OR ')})"
       options = { :start => per_page * (page - 1), :len => per_page }.merge(options)
       results = index.search(query, options)
@@ -119,6 +124,10 @@ module Tanker
           pager.total_entries = results["matches"]
         end
       end
+
+      @entries.extend ResultsMethods
+      @entries.results = results
+      @entries
     end
   end
 
@@ -131,10 +140,27 @@ module Tanker
     def tankit(name = nil, &block)
       name ||= Tanker.guess_index_name
 
-      raise NoIndexName, "Please provide a name for this index" unless name
+      raise NoIndexName, "Please provide a name for this index" unless name || tanker_config
       
       if block_given?
         self.tanker_config = ModelConfig.new(name.to_s, block)
+
+        name ||= self.tanker_config.index_name
+
+        self.tanker_config.index_name = name
+
+        config = ModelConfig.new(name, block)
+        config.indexes.each do |key, value|
+          self.tanker_config.indexes << [key, value]
+        end
+
+        %w[variables categories].each do |method|
+          unless config.send(method).empty?
+            self.tanker_config.send(method) do
+              instance_exec &config.send(method).first
+            end
+          end
+        end
       else
         raise NoBlockGiven, 'Please provide a block'
       end
@@ -173,15 +199,21 @@ module Tanker
       end
       puts "Indexed #{record_size} #{self} records in #{Time.now - timer} seconds"
     end
+
+    def tanker_parse_doc_id(result)
+      result['docid'].split(' ').last
+    end
   end
 
   class ModelConfig
-    attr_reader :index_name
+    attr_accessor :index_name
 
     def initialize(index_name, block)
       @index_name = index_name
       @indexes    = []
+      @variables  = []
       @functions  = {}
+      @categories = []
       instance_exec &block
     end
 
@@ -191,13 +223,18 @@ module Tanker
     end
 
     def variables(&block)
-      @variables = block if block
+      @variables << block if block
       @variables
     end
 
     def functions(&block)
       @functions = block.call if block
       @functions
+    end
+
+    def categories(&block)
+      @categories << block if block
+      @categories
     end
 
     def index
@@ -219,6 +256,10 @@ module Tanker
 
     def tanker_variables
       tanker_config.variables
+    end
+
+    def tanker_categories
+      tanker_config.categories
     end
 
     # update a create instance from index tank
@@ -249,6 +290,7 @@ module Tanker
 
       data[:__any] = data.values.sort_by{|v| v.to_s}.join " . "
       data[:__type] = self.class.name
+      data[:__id] = self.id
 
       data
     end
@@ -256,8 +298,16 @@ module Tanker
     def tanker_index_options
       options = {}
 
-      if tanker_variables
-        options[:variables] = instance_exec(&tanker_variables)
+      unless tanker_variables.empty?
+        options[:variables] = tanker_variables.inject({}) do |hash, variables|
+          hash.merge(instance_exec(&variables))
+        end
+      end
+
+      unless tanker_categories.empty?
+        options[:categories] = tanker_categories.inject({}) do |hash, categories|
+          hash.merge(instance_exec(&categories))
+        end
       end
 
       options
@@ -266,6 +316,14 @@ module Tanker
     # create a unique index based on the model name and unique id
     def it_doc_id
       self.class.name + ' ' + self.id.to_s
+    end
+  end
+
+  module ResultsMethods
+    attr_accessor :results
+
+    def facets
+      @results['facets']
     end
   end
 end

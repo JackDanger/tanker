@@ -177,7 +177,106 @@ IndexTank and the Tanker gem support native geographic calculations. All you nee
                       :function => 1,
                       :filter_functions => {2 => [['*', 50]]})
 
+== Categories and faceted search example
 
+If your IndexTank indexes have faceting enabled, you can do this:
+
+    class Part < ActiveRecord::Base
+      include Tanker
+
+      tankit 'index' do
+        indexes :brand
+        indexes :part_number
+
+        # return a hash of category/value pairs
+        categories do
+          {
+            'price_range' => (price > 5 ? 'expensive' : 'cheap')
+          }
+        end
+      end
+    end
+
+To retrieve facets in a search:
+
+    @parts, @facets = Part.search_tank('widget', :facets => true)
+
+    # @facets =
+    #   { 'price_range' => { 'expensive' => 93, 'cheap' => 47 } }
+
+At some point you will probably also want to filter what categories to search.
+That's faceted searching, after all!
+
+    # search only cheap parts:
+    @parts = Part.search_tank('widget', :category_filters => { 'price_range' => 'cheap' })
+
+    # highly contrived, but to show how you could filter multiple values for a
+    # given category:
+    @parts = Part.search_tank('widget', :category_filters => { 'price_range' => ['cheap', 'expensive'] })
+
+    # or multiple categories:
+    @parts = Part.search_tank('widget', :category_filters => { 'price_range' => ['cheap', 'expensive'],
+                                                               'type' => 'Part' })
+
+
+== Extend your index definitions
+
+If you have a bunch of models with a lot of overlapping indexed fields,
+variables, or categories, you might want to abstract those out into a module
+that you can include and then extend in the including classes. Something like:
+
+    module TankerDefaults
+      def self.included(base)
+        base.send(:include, ::Tanker) # include the actual Tanker module
+
+        # provide a default index name
+        base.tankit 'my_index' do
+          # index some common fields
+          indexes :tag_list
+
+          # set some common variables
+          variables do
+            {
+              0 => view_count
+              1 => foo
+            }
+          end
+
+          # set some common categories
+          categories do
+            {
+              "type" => self.class.name
+            }
+          end
+        end
+      end
+    end
+
+    class SuperModel
+      include TankerDefaults
+
+      # no need to respecify the index if it's the same
+      # (but you can override it)
+      tankit do
+        # `indexes :tag_list` is inherited
+        indexes :name
+        indexes :boyfriend_names do
+          boyfriends.map(&:name)
+        end
+
+        variables do
+          {
+            # `0 => view_count` is inherited
+            1 => iq,                 # overwrites "foo"
+            2 => endorsements.count  # adds new variables
+          }
+        end
+
+        # and the same can be done with categories
+      end
+    end
+
+You currently can't remove previously defined stuff, though.
 
 == An index for each environment
 
