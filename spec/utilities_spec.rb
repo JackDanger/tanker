@@ -17,9 +17,8 @@ describe Tanker::Utilities do
   end
 
   it "should get the available indexes" do
-    @dummy_class.send(:tankit, 'dummy index') do
-    end
-    Tanker::Utilities.get_available_indexes.should == ["people", "animals", "another index", "dummy index"]
+    @dummy_class.send(:tankit, 'dummy index') {}
+    Tanker::Utilities.get_available_indexes.should == ["people", "animals", "dummy index"]
   end
 
 end
