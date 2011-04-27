@@ -143,7 +143,7 @@ module Tanker
       raise NoBlockGiven, 'Please provide a block' unless block_given?
       raise NoIndexName, "Please provide a name for this index" unless name || tanker_config
 
-      self.tanker_config = ModelConfig.new(name.to_s, block)
+      self.tanker_config ||= ModelConfig.new(name.to_s, block)
 
       name ||= self.tanker_config.index_name
 
