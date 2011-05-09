@@ -51,7 +51,7 @@ module Tanker
 
       def instantiate_results(index_result)
         results = index_result['results']
-        return [] if results.empty?
+        return [] if results.nil? || results.empty?
 
         id_map = results.inject({}) do |acc, result|
           model = detect_model(result)
